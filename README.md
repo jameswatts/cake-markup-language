@@ -49,10 +49,10 @@ However, the same can also be acheived by just using the *default* attribute:
 <cake:out value="%{text}" default="Nothing here" />
 ```
 
-More complex operations include **for**, **foreach** and **while** loops, which provide the ability of rapid templating, including automatic variable declaration.
+More complex operations include **for**, **foreach** and **while** loops, which provide the ability of rapid templating, including automatic variable declaration and default values for empty arrays.
 
 ```html
-<php:foreach var="products">
+<php:foreach var="products" default="No products found">
 	<cake:out value="%{COUNT}. %{KEY} = &quot;%{VALUE}&quot;" safe="true" />
 </php:foreach>
 ```
@@ -60,7 +60,7 @@ More complex operations include **for**, **foreach** and **while** loops, which 
 The **cake** namespace also provides many tags for common usage, such as including *elements*, for example:
 
 ```html
-<cake:element name="" options="['example' => %{value}]" />
+<cake:element name="sidebar" options="['example' => %{value}]" />
 ```
 
 You can also easily create *links*, which in the following examples use ```#{literal}``` to load a translated string, as well as including additional *HTML* content.
