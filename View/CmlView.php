@@ -360,10 +360,11 @@ class CmlView extends View {
 			$parts = explode('.', $name);
 			$array = $this->viewVars;
 			foreach ($parts as $part) {
-				if (isset($array[$part])) {
-					$array = $array[$part];
+				$isObject = is_object($array);
+				if (($isObject && isset($array->$part)) || isset($array[$part])) {
+					$array = ($isObject)? $array->$part : $array[$part];
 				} else {
-					throw new CakeException('View variable not found: ' . $name);
+					throw new Exception('View variable not found: ' . $name);
 				}
 			}
 			return $array;
@@ -418,10 +419,11 @@ class CmlView extends View {
 			$parts = explode('.', $name);
 			$array = $this->viewVars;
 			foreach ($parts as $part) {
-				if (isset($array[$part])) {
-					$array = $array[$part];
+				$isObject = is_object($array);
+				if (($isObject && isset($array->$part)) || isset($array[$part])) {
+					$array = ($isObject)? $array->$part : $array[$part];
 				} else {
-					throw new CakeException('View variable not found: ' . $name);
+					throw new Exception('View variable not found: ' . $name);
 				}
 			}
 			return $array;
