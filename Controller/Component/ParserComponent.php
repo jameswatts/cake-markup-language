@@ -95,10 +95,10 @@ class ParserComponent extends Component {
 	public $debug = false;
 
 /**
- * Called before the Controller::beforeRender(), and before 
- * the view class is loaded, and before Controller::render()
+ * Called before the Controller::beforeRender(), and before the view class is 
+ * loaded, and before Controller::render().
  *
- * @param Controller $controller Controller with components to beforeRender
+ * @param Controller $controller Controller with components to beforeRender.
  * @return void
  */
 	public function beforeRender(Controller $controller) {
@@ -122,6 +122,39 @@ class ParserComponent extends Component {
 				}
 			}
 		}
+	}
+
+/**
+ * Formats the array as a short array syntax string for the View.
+ *
+ * @param array $array The array to format.
+ * @return string
+ */
+	public function formatArray($array = array()) {
+		$items = array();
+		foreach ($array as $key => $value) {
+			$item = '';
+			if (!is_numeric($key)) {
+				$item .= "'" . $this->formatString($key) . "' => ";
+			}
+			if (is_array($value)) {
+				$item .= $this->formatArray($value);
+			} else {
+				$item .= (is_string($value))? "'" . $this->formatString($value) . "'" : $value;
+			}
+			$items[] = $item;
+		}
+		return '[' . implode(', ', $items) . ']';
+	}
+
+/**
+ * Formats the string as escaped for the View.
+ *
+ * @param string $string The string to format.
+ * @return string
+ */
+	public function formatString($string = '') {
+		return htmlentities($string, ENT_QUOTES, 'UTF-8', false);
 	}
 
 }
