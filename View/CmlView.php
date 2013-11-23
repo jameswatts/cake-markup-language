@@ -486,9 +486,6 @@ class CmlView extends View {
 		if ($view) {
 			$this->view = $view;
 		}
-		if (!$this->_helpersLoaded) {
-			$this->loadHelpers();
-		}
 		$this->assign('content', '');
 		$this->_overrideExtType = true;
 		if ($view !== false && $viewFileName = $this->_getViewFileName($this->view)) {
