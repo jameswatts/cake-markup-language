@@ -487,6 +487,7 @@ class CmlView extends View {
 			$this->view = $view;
 		}
 		$this->assign('content', '');
+		$this->ext = '.cml';
 		$this->_overrideExtType = true;
 		if ($view !== false && $viewFileName = $this->_getViewFileName($this->view)) {
 			$this->_currentType = self::TYPE_VIEW;
