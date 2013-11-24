@@ -88,11 +88,32 @@ class ParserComponent extends Component {
 	public $formHelper = 'Form';
 
 /**
+ * Determines if layouts are parsed as markup.
+ *
+ * @var boolean
+ */
+	public $renderLayout = false;
+
+/**
+ * Determines if elements are parsed as markup.
+ *
+ * @var boolean
+ */
+	public $renderElement = false;
+
+/**
  * Determines if debug mode is enabled.
  *
  * @var boolean
  */
 	public $debug = false;
+
+/**
+ * Static render settings for the View object.
+ *
+ * @var boolean
+ */
+	public static $renderSettings = array();
 
 /**
  * Called before the Controller::beforeRender(), and before the view class is 
@@ -103,6 +124,8 @@ class ParserComponent extends Component {
  */
 	public function beforeRender(Controller $controller) {
 		if (!$this->ignoreAction || ((is_string($this->ignoreAction) && $this->ignoreAction != $controller->action) || (is_array($this->ignoreAction) && !in_array($controller->action, $this->ignoreAction)))) {
+			self::$renderSettings['layout'] = $this->renderLayout;
+			self::$renderSettings['element'] = $this->renderElement;
 			$controller->viewClass = 'Cml.Cml';
 			if (is_array($this->helpers)) {
 				if (!is_array($controller->helpers)) {

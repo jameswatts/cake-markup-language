@@ -82,6 +82,22 @@ class CmlView extends View {
 	protected $_debug = false;
 
 /**
+ * Overrides the extension as Cake doesn't allow different $ext between views and layouts.
+ * 
+ * This is reset to false upon calling _getExtensions().
+ * 
+ * @var boolean
+ */
+	protected $_overrideExtType = false;
+
+/**
+ * The currently parsed view file.
+ *
+ * @var string
+ */
+        protected $_parsed = null;
+
+/**
  * Constructor
  *
  * @param Controller $controller The controller object.
@@ -132,11 +148,12 @@ class CmlView extends View {
  * @throws CakeException if there is an error in the view.
  */
 	protected function _parse($viewFile) {
-		$this->_current = $this->_parsed = $viewFile;
+		$this->_current = $viewFile;
 		$this->getEventManager()->dispatch(new CakeEvent('View.beforeRenderFile', $this, array($viewFile)));
 		$markup = file_get_contents($viewFile);
 		ob_start();
 		if ($this->_debug) {
+			$this->_parsed = (!$this->_parsed)? $this->_current : $this->_parsed;
 			$output = $source = $this->_parseMarkup($markup);
 			ob_clean();
 			try {
@@ -178,6 +195,7 @@ class CmlView extends View {
 			}
 			$content = str_replace(array($matches[1], '%START%', '%END%', '%OPEN%', '%CLOSE%'), array($code, '<', '>', '{', '}'), $content);
 		} else {
+			$this->_parsed = $this->_current;
 			$output = $this->_parseMarkup($markup);
 			eval(' ?> ' . $output . ' <?php ');
 			$content = ob_get_clean();
@@ -466,43 +484,89 @@ class CmlView extends View {
 	}
 
 /**
- * Renders view for given view file and layout.
+ * Returns filename of given action's template file (.ctp) as a string.
+ * CamelCased action names will be under_scored! This means that you can have
+ * LongActionNames that refer to long_action_names.ctp views.
  *
- * If View::$autoRender is false and no `$layout` is provided, the view will be returned bare.
- *
- * View and layout names can point to plugin views/layouts.  Using the `Plugin.view` syntax
- * a plugin view/layout can be used instead of the app ones.  If the chosen plugin is not found
- * the view will be located along the regular view path cascade.
- *
- * @param string $view Name of view file to use.
- * @param string $layout Layout to use.
- * @return string Rendered Element
- * @throws CakeException if there is an error in the view.
+ * @param string $name Controller action to find template filename for
+ * @return string Template filename
+ * @throws MissingViewException when a view file could not be found.
  */
-	public function render($view = null, $layout = null) {
-		if ($this->hasRendered) {
-			return true;
-		}
-		if ($view) {
-			$this->view = $view;
-		}
-		$this->assign('content', '');
+	protected function _getViewFileName($name = null) {
 		$this->ext = '.cml';
 		$this->_overrideExtType = true;
-		if ($view !== false && $viewFileName = $this->_getViewFileName($this->view)) {
-			$this->_currentType = self::TYPE_VIEW;
-			$this->getEventManager()->dispatch(new CakeEvent('View.beforeRender', $this, array($viewFileName)));
-			$this->assign('content', $this->_parse($viewFileName));
-			$this->getEventManager()->dispatch(new CakeEvent('View.afterRender', $this, array($viewFileName)));
+		return parent::_getViewFileName($name);
+	}
+
+/**
+ * Returns layout filename for this template as a string.
+ *
+ * @param string $name The name of the layout to find.
+ * @return string Filename for layout file (.ctp).
+ * @throws MissingLayoutException when a layout cannot be located
+ */
+	protected function _getLayoutFileName($name = null) {
+		if (ParserComponent::$renderSettings['layout'] && $name !== 'Cml.debug') {
+			$this->ext = '.cml';
+			$this->_overrideExtType = true;
 		}
-		if ($layout === null) {
-			$layout = $this->layout;
+		return parent::_getLayoutFileName($name);
+	}
+
+/**
+ * Renders a piece of PHP with provided parameters and returns HTML, XML, or any other string.
+ *
+ * This realizes the concept of Elements, (or "partial layouts") and the $params array is used to send
+ * data to be used in the element. Elements can be cached improving performance by using the `cache` option.
+ *
+ * @param string $name Name of template file in the/app/View/Elements/ folder,
+ *   or `MyPlugin.template` to use the template element from MyPlugin. If the element
+ *   is not found in the plugin, the normal view path cascade will be searched.
+ * @param array $data Array of data to be made available to the rendered view (i.e. the Element)
+ * @param array $options Array of options. Possible keys are:
+ * - `cache` - Can either be `true`, to enable caching using the config in View::$elementCache. Or an array
+ *   If an array, the following keys can be used:
+ *   - `config` - Used to store the cached element in a custom cache configuration.
+ *   - `key` - Used to define the key used in the Cache::write(). It will be prefixed with `element_`
+ * - `plugin` - Load an element from a specific plugin. This option is deprecated, see below.
+ * - `callbacks` - Set to true to fire beforeRender and afterRender helper callbacks for this element.
+ *   Defaults to false.
+ * - `ignoreMissing` - Used to allow missing elements. Set to true to not trigger notices.
+ * - `parse` - If `true` the element is parsed as markup, expecting a `.cml` file, otherwise it will look 
+ *   for a ".ctp" file and include it as normal. If the global `renderElement` setting is set on the 
+ *   Parser component then this check will be bypassed.
+ *   Defaults to false.
+ * @return string Rendered Element
+ * @deprecated The `$options['plugin']` is deprecated and will be removed in CakePHP 3.0. Use
+ *   `Plugin.element_name` instead.
+ */
+	public function element($name, $data = array(), $options = array()) {
+		$parse = array_key_exists('parse', $options);
+		if (ParserComponent::$renderSettings['element'] && (!$parse || ($parse && $options['parse']))) {
+			$this->ext = '.cml';
+			$this->_overrideExtType = true;
 		}
-		if ($layout && $this->autoLayout) {
-			$this->assign('content', $this->renderLayout('', $layout));
+		return parent::element($name, $data, $options);
+	}
+
+/**
+ * Sandbox method to evaluate a template / view script in.
+ *
+ * @param string $viewFile Filename of the view
+ * @param array $dataForView Data to include in rendered view.
+ *    If empty the current View::$viewVars will be used.
+ * @return string Rendered output
+ */
+	protected function _evaluate($viewFile, $dataForView) {
+		$this->ext = '.ctp';
+		$this->_overrideExtType = false;
+		if ($this->_currentType === self::TYPE_VIEW
+			|| ($this->_currentType === self::TYPE_LAYOUT && ParserComponent::$renderSettings['layout'] && substr($viewFile, -27) !== '/Cml/View/Layouts/debug.ctp')
+			|| ($this->_currentType === self::TYPE_ELEMENT && ParserComponent::$renderSettings['element'])) {
+			return $this->_parse($viewFile);
+		} else {
+			return parent::_evaluate($viewFile, $dataForView);
 		}
-		$this->hasRendered = true;
-		return $this->fetch('content');
 	}
 
 /**
