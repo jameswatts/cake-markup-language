@@ -44,6 +44,8 @@ Change the layout for the View at runtime.
 <cake:layout name="default" />
 ```
 
+Layouts can also be ".cml" files by setting the *renderLayout* option to *true* in the **Parser** component settings array.
+
 Setting the Content Type
 ------------------------
 
@@ -64,7 +66,7 @@ Include View varibales with the *%{variable}* syntax.
 </div>
 ```
 
-Arrays can also be traversed using dot notation.
+Arrays and objects can also be traversed using dot notation.
 
 ```html
 <div class="product">
@@ -179,6 +181,8 @@ Add an element to the View, passing arguments with View variables.
 
 **IMPORTANT:** The arguments for an element are specified in short array syntax.
 
+Elements can also be ".cml" files via the *parse* attribute set to "true", or by setting the *renderElement* option to *true* in the **Parser** component settings array. Using the *renderElement* setting will affect elements globally, which can be countered by setting the *parse* attribute to "false" to revert back to using a normal ".ctp" file on a specific element.
+
 Using a Helper
 --------------
 
@@ -203,6 +207,17 @@ Additionally, the result from a helper can be stored in a View variable.
 ```
 
 **IMPORTANT:** The arguments for a helper method are specified in short array syntax.
+
+Defining Variables
+------------------
+
+Variables can be defined by using the **var** element.
+
+```html
+<php:var name="example" value="Hello World" />
+```
+
+**IMPORTANT:** It is generally bad practice to define variables in the View, with the preference being that these are defined or resolved previously in the Controller.
 
 If, Elseif and Else
 -------------------

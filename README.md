@@ -13,7 +13,7 @@ The main features of the plugin include:
 * **Internal Debugging:** By enabling debug mode on the Parser component you can quickly review the compiled View before it's processed, giving you a clear idea of the generated code before it's rendered as the output.
 * **Extensible by Design:** As the markup tags used in **CakeML** are grouped together under a common namespace, you can easily import your own custom or *third-party* namespaces from a *CakePHP* plugin, allowing you to reuse tags in other applications.
 * **Plug and Play:** Using the plugin is as simple as including the Parser component, which doesn't limit you from still using the normal ".ctp" files, as you can even use both formats for different Views in the same Controller.
-* **Compatibility:** All of the View features currently in *CakePHP* are still available, such as *themes*, *layouts*, *elements*, *content blocks* and *helpers*.
+* **Compatibility:** All of the View features currently in *CakePHP* are still available, such as *themes*, *layouts*, *elements*, *content blocks* and *helpers*, with both *layouts* and *elements* also able to contain **CakeML** markup.
 
 To start using the **Cake Markup Language** it's as easy as including the *ParserComponent* from the plugin in your Controller, for example:
 
@@ -25,7 +25,7 @@ public $components = array(
 );
 ```
 
-View files using **CakeML** are saved with the ".cml" extension, differenciating them from standard ".ctp" templates. To create a view, simply include the **CakeML** markup along with your static *HMTL*, *CSS* and *JavaScript* client code.
+View, layout and element files using **CakeML** are saved with the ".cml" extension, differenciating them from standard ".ctp" templates. To create a View, simply include the **CakeML** markup along with your static *HMTL*, *CSS* and *JavaScript* client code.
 
 ```html
 <div id="example">
