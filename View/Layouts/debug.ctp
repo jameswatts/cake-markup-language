@@ -80,7 +80,6 @@ $title_for_layout = __d('Cml', 'Debug');
 			?>
 		</div>
 	</div>
-	<?php echo $this->element('sql_dump'); ?>
 	<script type="text/javascript">
 		ACTIVE_LINE = null;
 		function updateLine() {
