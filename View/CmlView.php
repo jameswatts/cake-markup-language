@@ -545,6 +545,9 @@ class CmlView extends View {
 		if (ParserComponent::$renderSettings['element'] && (!$parse || ($parse && $options['parse']))) {
 			$this->ext = '.cml';
 			$this->_overrideExtType = true;
+			foreach ($data as $key => $value) {
+				$this->viewVars[(string) $key] = $value;
+			}
 		}
 		return parent::element($name, $data, $options);
 	}
