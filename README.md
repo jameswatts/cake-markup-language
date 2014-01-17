@@ -84,10 +84,10 @@ Probably the most important feature is forms, which can also be generated quickl
 The **cake** namespace also allows you to access any core or *third-party* helper, which means no change is needed to use your existing helpers.
 
 ```html
-<cake:helper name="Helper" get="property" />
+<cake:helper name="Example" get="someProperty" />
 
-<cake:helper name="Helper" call="method" args="['Hello World']" set="returnValue" />
-<cake:out value="%{HtmlDiv}" safe="0" />
+<cake:helper name="Example" call="someFunction" args="['Hello World']" set="something" />
+<cake:out value="%{something}" safe="0" />
 ```
 
 To get working quickly check out the [Quick Start](Docs/Tutorials/Quick-Start.md) or [Hello World](Docs/Tutorials/Hello-World.md) tutorials from the [documentation](Docs/Home.md).
@@ -121,7 +121,7 @@ If you'd like to contribute new features, enhancements or bug fixes to the code 
 * Consider using the [CakePHP Code Sniffer](https://github.com/cakephp/cakephp-codesniffer) to check the quality of your code
 * When ready, make a [pull request](http://help.github.com/send-pull-requests/) to the main repository
 
-There may be some discussion reagrding your contribution to the repository before any code is merged in, so be prepared to provide feedback on your contribution if required.
+There may be some discussion regarding your contribution to the repository before any code is merged in, so be prepared to provide feedback on your contribution if required.
 
 A list of contributors to the **Cake Markup Language** can be found [here](https://github.com/jameswatts/cake-markup-language/contributors).
 
