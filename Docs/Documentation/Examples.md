@@ -6,7 +6,7 @@ The following are a few basic examples for use with the **Cake Markup Language**
 Output Content
 --------------
 
-Output a string of text to the View.
+Output a string of text to the View using the **cake** namespace.
 
 ```html
 <cake:out value="Hello World" />
@@ -58,7 +58,7 @@ Change the content type of the View at runtime.
 Using View Variables
 --------------------
 
-Include View varibales with the *%{variable}* syntax.
+Include View variables with the *%{variable}* syntax.
 
 ```html
 <div id="example" class="%{class}">
@@ -74,7 +74,19 @@ Arrays and objects can also be traversed using dot notation.
 </div>
 ```
 
-**IMPORTANT:** View variables can be injected both in the **CakeML** syntax, as well as directly in the View itself.
+Reading View variables is defined at compile time. For direct references at runtime you can use the *&{variable}* syntax. However, keep in mind that this will only be able to access variables previously defined in the Controller.
+
+```html
+<cake:element name="example" vars="['something' => &{value}]" />
+```
+
+Short array syntax is the default format for defining arrays and objects within the **CakeML** markup attributes.
+
+```php
+array('param' => 'value') -> ['param' => 'value']
+```
+
+**IMPORTANT:** View variables can be injected both in the **CakeML** markup, as well as directly in the View itself.
 
 Debugging View Variables
 ------------------------
@@ -147,6 +159,20 @@ Create a View block with content.
 </cake:block>
 ```
 
+You can also append or prepend to an existing View block.
+
+```html
+<cake:append name="example" value="Something more" />
+```
+
+Or by defining the content within the block itself.
+
+```html
+<cake:append name="example">
+	Something else to add
+</cake:append>
+```
+
 Fetching a View Block
 ---------------------
 
@@ -201,7 +227,7 @@ Methods on helpers can also be called via the *call* attribute, optionally passi
 Additionally, the result from a helper can be stored in a View variable.
 
 ```html
-<cake:helper name="Example" call="getSomething" var="something" />
+<cake:helper name="Example" call="getSomething" set="something" />
 
 <cake:out value="%{something}" />
 ```
@@ -211,13 +237,15 @@ Additionally, the result from a helper can be stored in a View variable.
 Defining Variables
 ------------------
 
-Variables can be defined by using the **var** element.
+Variables can be defined by using the **var** element using the **php** namespace.
 
 ```html
-<php:var name="example" value="Hello World" />
+<php:var name="example" expr="'Hello World'" />
 ```
 
-**IMPORTANT:** It is generally bad practice to define variables in the View, with the preference being that these are defined or resolved previously in the Controller.
+As the value is a *string* it must be defined with quotes in the *expr* attribute, otherwise a *constant* is assumed.
+
+**IMPORTANT:** It is generally bad practice to define variables in the View, with the preference being that they are always defined or resolved previously in the Controller.
 
 If, Elseif and Else
 -------------------
