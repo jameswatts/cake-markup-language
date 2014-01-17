@@ -15,6 +15,7 @@ Documentation
 * [Overview](Documentation/Overview.md)
 * [Installation](Documentation/Installation.md)
 * [Examples](Documentation/Examples.md)
+* [Comparisons](Documentation/Comparisons.md)
 * [Debugging](Documentation/Debugging.md)
 * [Markup](Documentation/Markup.md)
 * [Variables](Documentation/Variables.md)
