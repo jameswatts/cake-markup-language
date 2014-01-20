@@ -33,24 +33,24 @@ class PhpNamespace extends CmlNamespace {
  */
 	public function load(array $settings = null) {
 		$vars = array(
-			'Server' => array(),
-			'Session' => array(),
-			'Request' => array(),
-			'Cookie' => array()
+			'server' => array(),
+			'session' => array(),
+			'request' => array(),
+			'cookie' => array()
 		);
 		foreach ($_SERVER as $key => $value) {
-			$vars['Server'][strtolower($key)] = $value;
+			$vars['server'][strtolower($key)] = $value;
 		}
 		if (isset($_SESSION)) {
 			foreach ($_SESSION as $key => $value) {
-				$vars['Session'][$key] = $value;
+				$vars['session'][$key] = $value;
 			}
 		}
 		foreach ($_REQUEST as $key => $value) {
-			$vars['Request'][$key] = $value;
+			$vars['request'][$key] = $value;
 		}
 		foreach ($_COOKIE as $key => $value) {
-			$vars['Cookie'][$key] = $value;
+			$vars['cookie'][$key] = $value;
 		}
 		$this->_view->viewVars['Php'] = $vars;
 	}

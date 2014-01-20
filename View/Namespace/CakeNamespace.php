@@ -33,6 +33,8 @@ class CakeNamespace extends CmlNamespace {
  */
 	public function load(array $settings = null) {
 		$this->_view->viewVars['Cake'] = array(
+			'version' => Configure::version(),
+			'debug' => Configure::read('debug'),
 			'plugin' => $this->_controller->plugin,
 			'controller' => $this->_controller->name,
 			'action' => $this->_controller->action,
@@ -42,7 +44,7 @@ class CakeNamespace extends CmlNamespace {
 			'modelKey' => $this->_controller->modelKey,
 			'validationErrors' => $this->_controller->validationErrors,
 			'passedArgs' => $this->_controller->passedArgs,
-			'Request' => array(
+			'request' => array(
 				'params' => $this->_controller->request->params,
 				'data' => $this->_controller->request->data,
 				'query' => $this->_controller->request->query,
