@@ -19,11 +19,19 @@ The **Cml.Parser** component also accepts a settings array, which allows you to 
 * **layout**: Defines the layout for **CakeML** to use in this Controller
 * **ignoreAction**: Defines an array of actions to ignore, and process as legacy ".ctp" views
 * **cacheAction**: Defines the actions to cache and their relevant settings
+* **loadConfigure**: If *true*, additionally looks in Configure for View variables
+* **loadSession**: If *true*, additionally looks in the session for View variables
 * **debug**: If *true*, the internal [debug](../Documentation/Debugging.md) mode will be enabled
 * **renderLayout**: If *true*, specifies that all layouts will be ".cml" files
 * **renderElement**: If *true*, specifies that all elements will be ".cml" files
 * **htmlHelper**: Defines the HTML helper to use, defaults to the core helper
 * **formHelper**: Defines the form helper to use, defaults to the core helper
+* **paginatorHelper**: Defines the paginator helper to use, defaults to the core helper
+* **jsHelper**: Defines the JavaScript helper to use, defaults to the core helper
+* **textHelper**: Defines the text helper to use, defaults to the core helper
+* **numberHelper**: Defines the number helper to use, defaults to the core helper
+* **timeHelper**: Defines the time helper to use, defaults to the core helper
+* **cacheHelper**: Defines the cache helper to use, defaults to the core helper
 
 Creating Views
 --------------
