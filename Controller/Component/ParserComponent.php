@@ -74,6 +74,20 @@ class ParserComponent extends Component {
 	public $namespaces = null;
 
 /**
+ * Defines if View variable lookup includes Configure variables.
+ *
+ * @var boolean
+ */
+	public $loadConfigure = false;
+
+/**
+ * Defines if View variable lookup includes Session variables.
+ *
+ * @var boolean
+ */
+	public $loadSession = false;
+
+/**
  * Determines the name of the Html helper in the View.
  *
  * @var string
@@ -86,6 +100,48 @@ class ParserComponent extends Component {
  * @var string
  */
 	public $formHelper = 'Form';
+
+/**
+ * Determines the name of the Paginator helper in the View.
+ *
+ * @var string
+ */
+	public $paginatorHelper = 'Paginator';
+
+/**
+ * Determines the name of the Js helper in the View.
+ *
+ * @var string
+ */
+	public $jsHelper = 'Js';
+
+/**
+ * Determines the name of the Text helper in the View.
+ *
+ * @var string
+ */
+	public $textHelper = 'Text';
+
+/**
+ * Determines the name of the Number helper in the View.
+ *
+ * @var string
+ */
+	public $numberHelper = 'Number';
+
+/**
+ * Determines the name of the Time helper in the View.
+ *
+ * @var string
+ */
+	public $timeHelper = 'Time';
+
+/**
+ * Determines the name of the Cache helper in the View.
+ *
+ * @var string
+ */
+	public $cacheHelper = 'Cache';
 
 /**
  * Determines if layouts are parsed as markup.
@@ -109,6 +165,13 @@ class ParserComponent extends Component {
 	public $debug = false;
 
 /**
+ * Static load settings for the View object.
+ *
+ * @var boolean
+ */
+	public static $loadSettings = array();
+
+/**
  * Static render settings for the View object.
  *
  * @var boolean
@@ -124,6 +187,8 @@ class ParserComponent extends Component {
  */
 	public function beforeRender(Controller $controller) {
 		if (!$this->ignoreAction || ((is_string($this->ignoreAction) && $this->ignoreAction != $controller->action) || (is_array($this->ignoreAction) && !in_array($controller->action, $this->ignoreAction)))) {
+			self::$loadSettings['configure'] = $this->loadConfigure;
+			self::$loadSettings['session'] = $this->loadSession;
 			self::$renderSettings['layout'] = $this->renderLayout;
 			self::$renderSettings['element'] = $this->renderElement;
 			$controller->viewClass = 'Cml.Cml';
