@@ -74,6 +74,14 @@ Arrays and objects can also be traversed using dot notation.
 </div>
 ```
 
+Variables may also be injected as references, for example:
+
+```html
+<cake:out value="%{products[product.type].name}" />
+```
+
+This would use the value of *%{product.type}* as the key for *%{products}*.
+
 Reading View variables is defined at compile time. For direct references at runtime you can use the *&{variable}* syntax. However, keep in mind that this will only be able to access variables previously defined in the Controller.
 
 ```html
