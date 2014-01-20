@@ -1,0 +1,33 @@
+<php:var name="cakeDescription" value="#{cake_dev^CakePHP: the rapid development php framework}" />
+<!DOCTYPE html>
+<html>
+<head>
+	<cake:charset />
+	<title>
+		<cake:out value="%{cakeDescription}" />:
+		<cake:out value="%{title_for_layout}" />
+	</title>
+	<cake:meta type="icon" />
+	<cake:css path="cake.generic" />
+	<cake:fetch name="meta" />
+	<cake:fetch name="css" />
+	<cake:fetch name="script" />
+</head>
+<body>
+	<div id="container">
+		<div id="header">
+			<h1><cake:link value="%{cakeDescription}" url="http://cakephp.org" /></h1>
+		</div>
+		<div id="content">
+			<cake:flash />
+			<cake:fetch name="content" />
+		</div>
+		<div id="footer">
+			<cake:link url="http://www.cakephp.org/" options="['target' => '_blank', 'escape' => false]">
+				<cake:image path="cake.power.gif" options="['alt' => $cakeDescription, 'border' => '0']" />
+			</cake:link>
+		</div>
+	</div>
+	<cake:element name="sql_dump" parse="false" />
+</body>
+</html>
