@@ -48,6 +48,46 @@ class CmlView extends View {
 	const TAG_CLOSE = 3;
 
 /**
+ * Null type.
+ */
+	const TYPE_NULL = 'null';
+
+/**
+ * Boolean type.
+ */
+	const TYPE_BOOLEAN = 'boolean';
+
+/**
+ * Integer type.
+ */
+	const TYPE_INTEGER = 'integer';
+
+/**
+ * Float type.
+ */
+	const TYPE_FLOAT = 'float';
+
+/**
+ * Numeric type.
+ */
+	const TYPE_NUMERIC = 'numeric';
+
+/**
+ * String type.
+ */
+	const TYPE_STRING = 'string';
+
+/**
+ * Array type.
+ */
+	const TYPE_ARRAY = 'array';
+
+/**
+ * Object type.
+ */
+	const TYPE_OBJECT = 'object';
+
+/**
  * Parser processing timeout.
  * 
  * @var integer
@@ -71,7 +111,13 @@ class CmlView extends View {
  */
 	protected $_helpers = array(
 		'Html' => null,
-		'Form' => null
+		'Form' => null,
+		'Paginator' => null,
+		'Js' => null,
+		'Text' => null,
+		'Number' => null,
+		'Time' => null,
+		'Cache' => null
 	);
 
 /**
@@ -91,6 +137,13 @@ class CmlView extends View {
 	protected $_overrideExtType = false;
 
 /**
+ * Determines if an element's parsing options ahve been overridden.
+ * 
+ * @var boolean
+ */
+	protected $_overrideElement = false;
+
+/**
  * The currently parsed view file.
  *
  * @var string
@@ -98,9 +151,17 @@ class CmlView extends View {
         protected $_parsed = null;
 
 /**
+ * A captured error.
+ *
+ * @var array
+ */
+        protected $_error = null;
+
+/**
  * Constructor
  *
  * @param Controller $controller The controller object.
+ * @throws CakeException if an unknown namespace is included.
  */
 	public function __construct(Controller $controller = null) {
 		parent::__construct($controller);
@@ -126,10 +187,31 @@ class CmlView extends View {
 			$namespace = new $class($controller, $this);
 			$namespace->load((isset($nsSettings[$ns]))? $nsSettings[$ns] : array());
 		}
-		$this->_helpers['Html'] = $controller->Parser->htmlHelper;
-		$this->_helpers['Form'] = $controller->Parser->formHelper;
+		$this->_helpers = array(
+			'Html' => $controller->Parser->htmlHelper,
+			'Form' => $controller->Parser->formHelper,
+			'Paginator' => $controller->Parser->paginatorHelper,
+			'Js' => $controller->Parser->jsHelper,
+			'Text' => $controller->Parser->textHelper,
+			'Number' => $controller->Parser->numberHelper,
+			'Time' => $controller->Parser->timeHelper,
+			'Cache' => $controller->Parser->cacheHelper
+		);
 		$this->_debug = $controller->Parser->debug;
 		$this->_controller = $controller;
+		foreach ($this->viewVars as $key => $value) {
+			if (strstr($key, '.')) {
+				$parts = explode('.', $key);
+				$viewVars = &$this->viewVars;
+				foreach ($parts as $part) {
+					$viewVars = &$viewVars[$part];
+				}
+				$viewVars = $value;
+			}
+		}
+		if ($this->_debug) {
+			Configure::write('Exception.renderer', 'Cml.CmlExceptionRenderer');
+		}
 	}
 
 /**
@@ -154,9 +236,13 @@ class CmlView extends View {
 		ob_start();
 		if ($this->_debug) {
 			$this->_parsed = (!$this->_parsed)? $this->_current : $this->_parsed;
-			$output = $source = $this->_parseMarkup($markup);
-			ob_clean();
+			$this->assign('css', '');
+			$this->assign('script', '');
+			$source = null;
+			$error = null;
 			try {
+				$output = $source = $this->_parseMarkup($markup);
+				ob_clean();
 				eval(' ?> ' . $output . ' <?php ');
 			} catch(Exception $e) {
 				$error = array(
@@ -167,16 +253,22 @@ class CmlView extends View {
 			}
 			if (error_get_last()) {
 				$error = error_get_last();
+			} else if (!$error) {
+				$error = $this->_error;
 			}
 			ob_clean();
 			$this->response->type('text/html');
 			$this->response->charset('UTF-8');
 			$this->layout = 'Cml.debug';
-			if (isset($error)) {
-				echo '<p class="error"><b>Error:</b> ' . $error['message'] . '</p>';
-				if ($error['file'] === $viewFile || strstr($error['file'], 'eval()\'d')) {
-					echo '<script type="text/javascript">ERROR_LINE = \'L' . $error['line'] . '\';</script>';
+			if ($error) {
+				echo '<p class="error"><b>Error:</b> ' . $error['message'] . ' on line ' . (($this->_error)? $this->_error['line'] : $error['line']) . ' of ' . $this->_parsed . '</p>';
+				if ($this->_parsed === $viewFile) {
+					echo '<script type="text/javascript">ERROR_LINE = \'L' . (($this->_error)? $this->_error['line'] : $error['line']) . '\';</script>';
 				}
+				$this->_parsed = $viewFile;
+			}
+			if (!$source) {
+				$source = '';
 			}
 			debug($source);
 			$content = str_replace(array("\"cake-debug\">\n&#039;", "&#039;\n</pre>"), array('"cake-debug">', '</pre>'), ob_get_clean());
@@ -193,7 +285,7 @@ class CmlView extends View {
 				}
 				$i++;
 			}
-			$content = str_replace(array($matches[1], '%START%', '%END%', '%OPEN%', '%CLOSE%'), array($code, '<', '>', '{', '}'), $content);
+			$content = str_replace(array($matches[1], '%START%', '%END%', '%OPEN%', '%CLOSE%', '%LEFT%', '%RIGHT%'), array($code, '<', '>', '{', '}', '[', ']'), $content);
 		} else {
 			$this->_parsed = $this->_current;
 			$output = $this->_parseMarkup($markup);
@@ -210,19 +302,35 @@ class CmlView extends View {
 	}
 
 /**
+ * Parses the backtrace to resolve the real line number.
+ *
+ * @return integer
+ */
+	protected function _parseError() {
+		$backtrace = debug_backtrace(false);
+		for ($i = 0; $i < count($backtrace); $i++) {
+			if (isset($backtrace[$i]['file']) && strstr($backtrace[$i]['file'], 'eval()\'d code')) {
+				$this->_error = $backtrace[$i];
+				break;
+			}
+		}
+	}
+
+/**
  * Parses the markup and returns the compiled output.
  *
  * @param string $markup The markup to parse.
  * @return string
+ * @throws CakeException if invalid markup syntax is detected.
  */
 	protected function _parseMarkup($markup = '') {
-		if (is_string($markup) && !preg_match('/^\s*$/', $markup)) {
-			$markup = str_replace(array('%START%', '<?', '<%', '%END%', '?>', '%>'), array('&lt;', '&lt;?', '&lt;%', '&gt;', '?&gt;', '%&gt;'), $markup);
+		if (!preg_match('/^\s*$/', (string) $markup)) {
+			$markup = str_replace(array('%START%', '<?', '<%', '%END%', '?>', '%>'), array('&lt;', '&lt;?', '&lt;%', '&gt;', '?&gt;', '%&gt;'), (string) $markup);
 			$markup = preg_replace('/(<\!\-\-comment\-\->[.\s\S\n\r]*?<\!\-\-\/comment\-\->)/i', '', $markup);
 			if (preg_match_all('/((%|&)\{([^\}]+)\})/i', $markup, $vars, PREG_OFFSET_CAPTURE)) {
 				if ($vars && count($vars) === 4) {
 					for ($i = 0; $i < count($vars[3]); $i++) {
-						$method = '_process' . (($vars[2][$i][0] === '%')? 'Variable' : 'Reference');
+						$method = ($vars[2][$i][0] === '%')? 'variable' : 'reference';
 						$markup = str_replace($vars[2][$i][0] . '{' . $vars[3][$i][0] . '}', $this->$method($vars[3][$i][0]), $markup);
 					}
 				}
@@ -230,12 +338,30 @@ class CmlView extends View {
 			if (preg_match_all('/(#\{([^\}]+)\})/i', $markup, $i18n, PREG_OFFSET_CAPTURE)) {
 				if ($i18n && count($i18n) === 3) {
 					for ($i = 0; $i < count($i18n[2]); $i++) {
-						$markup = str_replace('#{' . $i18n[2][$i][0] . '}', $this->_processLiteral($i18n[2][$i][0]), $markup);
+						$markup = str_replace('#{' . $i18n[2][$i][0] . '}', $this->literal($i18n[2][$i][0]), $markup);
 					}
 				}
 			}
 			$init = time()+$this->_timeout;
-			while (preg_match('/(<)(|\/)([\w\-]+)\:/i', $markup, $match, PREG_OFFSET_CAPTURE)) {
+			$start = 0;
+			$offset = 0;
+			if (preg_match('/([\w\-]+\s+=")|([\w\-]+\s+=\s+")|([\w\-]+=\s+")|([\w\-]+="\s*"[^\s\/]+")|([\w\-]+="[^"]*"\s*")/i', $markup, $match, PREG_OFFSET_CAPTURE)) {
+				$lines = explode(PHP_EOL, $markup);
+				$line = 0;
+				for ($i = 0; $i < count($lines); $i++) {
+					if (strstr($lines[$i], $match[0][0])) {
+						$line = $i+1;
+						break;
+					}
+				}
+				$this->_error = array(
+					'message' => 'Parser error, invalid syntax',
+					'file' => $this->_current,
+					'line' => $line
+				);
+				throw new CakeException('Parser error, invalid syntax');
+			}
+			while (preg_match('/(<)(|\/)([\w\-]+)\:/i', $markup, $match, PREG_OFFSET_CAPTURE, $start+$offset)) {
 				$start = $match[1][1];
 				if ($init < time()) {
 					break;
@@ -250,13 +376,15 @@ class CmlView extends View {
 					$ns = str_replace(' ', '', ucwords(str_replace('-', ' ', $ns)));
 					if (isset($this->_namespaces[$ns])) {
 						$state = ($matches[count($matches)-1][0] === '/')? self::TAG_SELF : (($matches[1][0] === '/')? self::TAG_CLOSE : self::TAG_OPEN);
-						$markup = str_replace($raw, $this->_parseTag($this->_namespaces[$ns], $ns, str_replace('-', '_', strtolower($tag)), ($state === self::TAG_CLOSE)? array() : $this->_parseAttributes($raw), $state, $raw), $markup);
+						$replace = $this->_parseTag($this->_namespaces[$ns], $ns, str_replace('-', '_', strtolower($tag)), ($state === self::TAG_CLOSE)? array() : $this->_parseAttributes($raw), $state, $raw);
 					} else {
-						$markup = str_replace($raw, str_replace(array('<', '>'), array('%START%', '%END%'), $raw), $markup);
+						$replace = str_replace(array('<', '>'), array('%START%', '%END%'), $raw);
 					}
+					$markup = str_replace($raw, $replace, $markup);
+					$offset = strlen($replace);
 				}
 			}
-			return str_replace(array('%START%', '%END%', '%OPEN%', '%CLOSE%'), array('<', '>', '{', '}'), $markup);
+			return str_replace(array('%START%', '%END%', '%OPEN%', '%CLOSE%', '%LEFT%', '%RIGHT%'), array('<', '>', '{', '}', '[', ']'), $markup);
 		}
 		return '';
 	}
@@ -275,7 +403,7 @@ class CmlView extends View {
  */
 	protected function _parseTag($plugin, $namespace, $tag, $attributes, $state, $raw) {
 		$file = APP . 'Plugin' . DS . $plugin . DS . 'View' . DS . 'Namespace' . DS . $namespace . DS . $tag . '.ctp';
-		if (!is_file($file) || !is_readable($file)) {
+		if (!is_file($file)) {
 			return h($raw);
 		}
 		try {
@@ -284,6 +412,7 @@ class CmlView extends View {
 			$output = ob_get_clean();
 		} catch(Exception $e) {
 			ob_end_clean();
+			$this->_parseError();
 			throw new CakeException($e->getMessage());
 		}
 		return $output;
@@ -295,12 +424,12 @@ class CmlView extends View {
  * @param string $tag The tag to parse.
  * @return array
  */
-	protected function _parseAttributes($tag) {
+	protected function _parseAttributes($tag = '') {
 		$attributes = array();
-		if (is_string($tag) && !preg_match('/^\s+$/', $tag)) {
-			$tag = preg_replace('/[\s]{2,}/', ' ', $tag);
+		if (!preg_match('/^\s+$/', (string) $tag)) {
+			$tag = preg_replace('/[\s]{2,}/', ' ', (string) $tag);
 			preg_match_all('/\s+([\w\-]+)\=("[^"]{1,}")/i', $tag, $parts, PREG_OFFSET_CAPTURE);
-			if (isset($parts) && count($parts) === 3) {
+			if (count($parts) === 3) {
 				for ($i = 0; $i < count($parts[0]); $i++) {
 					$attributes[$parts[1][$i][0]] = substr($parts[2][$i][0], 1, strlen($parts[2][$i][0])-2);
 				}
@@ -317,21 +446,53 @@ class CmlView extends View {
  * @param array $options The processing options.
  * @return string
  */
-	protected function _processAttribute(array $attributes, $name, array $options = null) {
+	public function attribute(array $attributes, $name, array $options = null) {
 		$options = array_merge(array(
 			'default' => null,
 			'format' => '"%s"',
 			'replace' => array(array('<?php echo ', '; ?>'), array('%OPEN%', '%CLOSE%')),
-			'parse' => null
+			'parse' => null,
+			'type' => self::TYPE_STRING
 		), (array) $options);
-		$attribute = (isset($attributes[$name]))? $attributes[$name] : $options['default'];
-		if (!is_null($attribute)) {
+		$attribute = (array_key_exists($name, $attributes))? $attributes[$name] : $options['default'];
+		if ($attribute === null) {
+			switch ($options['type']) {
+				case self::TYPE_NULL:
+					return 'null';
+				case self::TYPE_BOOLEAN:
+					return 'false';
+				case self::TYPE_INTEGER:
+				case self::TYPE_FLOAT:
+				case self::TYPE_NUMERIC:
+					return 0;
+				case self::TYPE_ARRAY:
+				case self::TYPE_OBJECT:
+					return 'array()';
+				default:
+					return (is_string($options['format']))? sprintf($options['format'], '') : '';
+			}
+		} else {
+			if (strstr($attribute, '&')) {
+				$attribute = html_entity_decode($attribute, ENT_QUOTES);
+			}
 			$string = strtolower(trim($attribute));
 			$gnirts = strrev($string);
-			if ($string === 'true' || $string === 'false' || $string === 'null') {
-				return (is_string($options['format']))? ((is_array($options['replace']))? sprintf($options['format'], str_replace($options['replace'][0], $options['replace'][1], (string) $attribute)) : sprintf($options['format'], (string) $attribute)) : (($string === 'null')? null : ($string === 'true'));
-			} else if (strlen($string) > 0 && $string{0} === '[' && $gnirts{0} === ']') {
-				return str_replace(array('[', ']'), array('array(', ')'), preg_replace('/(<\?php echo )(\$this\->_processVariable\(\'([\w\-]+)\'\))(\; \?>)/', '{$2}', trim($attribute)));
+			if ($options['type'] === self::TYPE_NULL || $string === 'null') {
+				return ($string === 'null')? 'null' : $string;
+			} else if ($options['type'] === self::TYPE_BOOLEAN || $string === 'true' || $string === 'false') {
+				if ($options['type'] === self::TYPE_BOOLEAN) {
+					return ($string === 'false' || $string === '0' || $string === '')? 'false' : 'true';
+				} else {
+					return (is_string($options['format']))? ((is_array($options['replace']))? sprintf($options['format'], str_replace($options['replace'][0], $options['replace'][1], (string) $attribute)) : sprintf($options['format'], (string) $attribute)) : (($string === 'null')? '' : ($string === 'true'));
+				}
+			} else if ($options['type'] === self::TYPE_INTEGER) {
+				return (int) $string;
+			} else if ($options['type'] === self::TYPE_FLOAT) {
+				return (float) $string;
+			} else if ($options['type'] === self::TYPE_NUMERIC) {
+				return 0+$string;
+			} else if ($options['type'] === self::TYPE_ARRAY || $options['type'] === self::TYPE_OBJECT || (strlen($string) > 0 && $string{0} === '[' && $gnirts{0} === ']')) {
+				return str_replace(array('[', ']'), array('array(', ')'), preg_replace('/(<\?php echo )(\$this\->(translate|translateDomain|reference|variable|value)\(\'([^\)]+)\'\))(\; \?>)/', '$2', trim($attribute)));
 			} else {
 				if (substr($string, 0, 7) === '$this->') {
 					$value = $attribute;
@@ -348,12 +509,10 @@ class CmlView extends View {
 					}
 				}
 				if ($options['parse'] === true) {
-					$options['parse'] = array('/(%OPEN%)(\$this\->_processValue\(\'([\w\-]+)\'\))(%CLOSE%)/', '$2');
+					$options['parse'] = array('/(%OPEN%)(\$this\->(translate|translateDomain|reference|variable|value)\(\'([^\)]+)\'\))(%CLOSE%)/', '$2');
 				}
 				return (is_array($options['parse']))? preg_replace($options['parse'][0], $options['parse'][1], $value) : $value;
 			}
-		} else {
-			return (is_string($options['format']))? sprintf($options['format'], '') : null;
 		}
 	}
 
@@ -363,8 +522,8 @@ class CmlView extends View {
  * @param string $name The name of the view variable.
  * @return mixed
  */
-	protected function _processVariable($name) {
-		return $this->_compile('echo $this->_processValue(\'' . $name . '\');');
+	public function variable($name) {
+		return $this->compile('echo $this->value(\'' . str_replace(array('[', ']'), array('%LEFT%', '%RIGHT%'), $name) . '\');');
 	}
 
 /**
@@ -373,26 +532,8 @@ class CmlView extends View {
  * @param string $name The name of the view variable.
  * @return mixed
  */
-	protected function _processReference($name) {
-		if (strstr($name, '.')) {
-			$parts = explode('.', $name);
-			$array = $this->viewVars;
-			foreach ($parts as $part) {
-				$isObject = is_object($array);
-				if (($isObject && isset($array->$part)) || isset($array[$part])) {
-					$array = ($isObject)? $array->$part : $array[$part];
-				} else {
-					throw new Exception('View variable not found: ' . $name);
-				}
-			}
-			return $array;
-		} else {
-			if (isset($this->viewVars[$name])) {
-				return $this->viewVars[$name];
-			} else {
-				throw new CakeException('View variable not found: ' . $name);
-			}
-		}
+	public function reference($name) {
+		return $this->value($name);
 	}
 
 /**
@@ -401,7 +542,7 @@ class CmlView extends View {
  * @param string $name The name of the I18N literal.
  * @return string
  */
-	protected function _processLiteral($literal) {
+	public function literal($literal) {
 		$raw = ($literal{0} === ':');
 		if ($raw) {
 			$literal = substr($literal, 1);
@@ -423,32 +564,116 @@ class CmlView extends View {
 		}	
 		$literal = str_replace(array('<?php ', 'echo ', '; ?>'), '', $literal);
 		$literal = (substr($literal, 0, 7) === '$this->')? $literal : "'" . $literal . "'";
-		return (($raw)? '' : '<?php echo ') . '__' . ((isset($domain))? "d({$domain}, {$literal}" : "({$literal}") . ((isset($values))? ', ' . implode(', ', $values) : '') . ')' . (($raw)? '' : '; ?>');
+		return (($raw)? '' : '<?php echo ') . '$this->translate' . ((isset($domain))? "Domain({$domain}, {$literal}" : "({$literal}") . ((isset($values))? ', ' . implode(', ', $values) : '') . ')' . (($raw)? '' : '; ?>');
 	}
 
 /**
- * Processes the value of a view variable.
+ * Translates a literal through the i18n system.
+ *
+ * @param string $literal The literal to lookup.
+ * @return string
+ */
+	public function translate($literal) {
+		$args = func_get_args();
+		return call_user_func_array('__', $args);
+	}
+
+/**
+ * Translates a domain literal through the i18n system.
+ *
+ * @param string $domain The i18n domain.
+ * @param string $literal The literal to lookup.
+ * @return string
+ */
+	public function translateDomain($domain, $literal) {
+		$args = func_get_args();
+		return call_user_func_array('__d', $args);
+	}
+
+/**
+ * Processes the value of a view variable. Use the * symbol to specify a default 
+ * in case the variable is undefined.
  *
  * @param string $name The name of the view variable.
+ * @param boolean $silent Forces null to be returned instead of an exception thrown.
  * @return mixed
+ * @throws CakeException if an unknown View variable is requested.
  */
-	protected function _processValue($name) {
+	public function value($name, $silent = false) {
+		$default = null;
+		if (strstr($name, '*')) {
+			$parts = explode('*', $name);
+			$name = $parts[0];
+			array_shift($parts);
+			$default = implode('*', $parts);
+		}
+		if (strstr($name, '[')) {
+			while (preg_match('/\[([\w\-\.\*]+)\]/i', $name, $match, PREG_OFFSET_CAPTURE, 0)) {
+				$name = str_replace($match[0][0], '.' . $this->value($match[1][0]), $name);
+			}
+		}
 		if (strstr($name, '.')) {
 			$parts = explode('.', $name);
 			$array = $this->viewVars;
+			$found = true;
 			foreach ($parts as $part) {
+				$isArray = is_array($array);
 				$isObject = is_object($array);
-				if (($isObject && isset($array->$part)) || isset($array[$part])) {
-					$array = ($isObject)? $array->$part : $array[$part];
+				if (($isObject && (property_exists($array, $part) || method_exists($array, $part))) || ($isArray && array_key_exists($part, $array))) {
+					$array = ($isObject)? ((method_exists($array, $part))? $array->$part() : $array->$part) : $array[$part];
 				} else {
-					throw new Exception('View variable not found: ' . $name);
+					if (ParserComponent::$loadSettings['configure'] || ParserComponent::$loadSettings['session']) {
+						$found = false;
+						break;
+					}
+					if ($default) {
+						return $default;
+					} else {
+						if ($silent) {
+							return null;
+						} else {
+							$this->_parseError();
+							throw new CakeException('View variable not found: ' . $name);
+						}
+					}
 				}
 			}
-			return $array;
-		} else if (isset($this->viewVars[$name])) {
+			if ($found) {
+				return $array;
+			}
+			if (ParserComponent::$loadSettings['configure'] || ParserComponent::$loadSettings['session']) {
+				if (Configure::read($name) !== null) {
+					return Configure::read($name);
+				} else if ($this->_controller->Session->read($name) !== null) {
+					return $this->_controller->Session->read($name);
+				} else {
+					if ($default) {
+						return $default;
+					} else {
+						if ($silent) {
+							return null;
+						} else {
+							$this->_parseError();
+							throw new CakeException('View variable not found: ' . $name);
+						}
+					}
+				}
+			}
+		} else if (array_key_exists($name, $this->viewVars)) {
 			return $this->viewVars[$name];
+		} else if (ParserComponent::$loadSettings['configure'] && Configure::read($name) !== null) {
+			return Configure::read($name);
+		} else if (ParserComponent::$loadSettings['session'] && $this->_controller->Session->read($name) !== null) {
+			return $this->_controller->Session->read($name);
+		} else if ($default) {
+			return $default;
 		} else {
-			throw new CakeException('View variable not found: ' . $name);
+			if ($silent) {
+				return null;
+			} else {
+				$this->_parseError();
+				throw new CakeException('View variable not found: ' . $name);
+			}
 		}
 	}
 
@@ -458,7 +683,7 @@ class CmlView extends View {
  * @param mixed $value The value to check.
  * @return boolean
  */
-	protected function _processIsset($value = null) {
+	protected function _isset($value = null) {
 		return (isset($value) && !is_null($value));
 	}
 
@@ -468,7 +693,7 @@ class CmlView extends View {
  * @param mixed $value The value to check.
  * @return boolean
  */
-	protected function _processEmpty($value = null) {
+	protected function _empty($value = null) {
 		return (!isset($value) || empty($value));
 	}
 
@@ -478,7 +703,7 @@ class CmlView extends View {
  * @param string $code The code to generate.
  * @return string
  */
-	protected function _compile() {
+	public function compile() {
 		$args = func_get_args();
 		return '<?php ' . ((count($args) > 1)? call_user_func_array('sprintf', $args) : $args[0]) . ' ?>';
 	}
@@ -545,12 +770,29 @@ class CmlView extends View {
 		if (ParserComponent::$renderSettings['element'] && (!$parse || ($parse && $options['parse']))) {
 			$this->ext = '.cml';
 			$this->_overrideExtType = true;
-			foreach ($data as $key => $value) {
-				$this->viewVars[(string) $key] = $value;
+			$this->_overrideElement = true;
+			if (is_array($data)) {
+				foreach ($data as $key => $value) {
+					$this->viewVars[(string) $key] = $value;
+				}
 			}
 		}
 		return parent::element($name, $data, $options);
 	}
+
+/**
+ * Renders an element and fires the before and afterRender callbacks for it
+ * and writes to the cache if a cache is used
+ *
+ * @param string $file Element file path
+ * @param array $data Data to render
+ * @param array $options Element options
+ * @return string
+ */
+        protected function _renderElement($file, $data, $options) {
+                $this->_parsed = $file;
+                return parent::_renderElement($file, $data, $options);
+        }
 
 /**
  * Sandbox method to evaluate a template / view script in.
@@ -565,7 +807,9 @@ class CmlView extends View {
 		$this->_overrideExtType = false;
 		if ($this->_currentType === self::TYPE_VIEW
 			|| ($this->_currentType === self::TYPE_LAYOUT && ParserComponent::$renderSettings['layout'] && substr($viewFile, -27) !== '/Cml/View/Layouts/debug.ctp')
-			|| ($this->_currentType === self::TYPE_ELEMENT && ParserComponent::$renderSettings['element'])) {
+			|| ($this->_currentType === self::TYPE_ELEMENT && $this->_overrideElement)) {
+			$this->_parsed = $viewFile;
+			$this->_overrideElement = false;
 			return $this->_parse($viewFile);
 		} else {
 			return parent::_evaluate($viewFile, $dataForView);
