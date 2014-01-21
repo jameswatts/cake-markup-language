@@ -169,14 +169,14 @@ class CmlView extends View {
 		if (is_array($controller->Parser->namespaces)) {
 			$namespaces = (empty($controller->Parser->namespaces))? array() : Set::normalize((array) $controller->Parser->namespaces);
 			foreach ($namespaces as $namespace => $settings) {
-				list($plugin, $ns) = explode('.', $namespace);
+				list($plugin, $ns) = pluginSplit($namespace);
+				$this->_namespaces[$ns] = ($plugin)? $plugin : false;
 				$nsSettings[$ns] = $settings;
-				$this->_namespaces[$ns] = $plugin;
 			}
 		} else if (is_string($controller->Parser->namespaces)) {
-			list($plugin, $ns) = explode('.', $controller->Parser->namespaces);
+			list($plugin, $ns) = pluginSplit($controller->Parser->namespaces);
+			$this->_namespaces[$ns] = ($plugin)? $plugin : false;
 			$nsSettings[$ns] = array();
-			$this->_namespaces[$ns] = $plugin;
 		}
 		foreach ($this->_namespaces as $ns => $plugin) {
 			$class = $ns . 'Namespace';
@@ -186,6 +186,7 @@ class CmlView extends View {
 			}
 			$namespace = new $class($controller, $this);
 			$namespace->load((isset($nsSettings[$ns]))? $nsSettings[$ns] : array());
+			$this->$ns = $namespace;
 		}
 		$this->_helpers = array(
 			'Html' => $controller->Parser->htmlHelper,
@@ -402,7 +403,7 @@ class CmlView extends View {
  * @throws CakeException if the template cannot be found or an error occurs.
  */
 	protected function _parseTag($plugin, $namespace, $tag, $attributes, $state, $raw) {
-		$file = APP . 'Plugin' . DS . $plugin . DS . 'View' . DS . 'Namespace' . DS . $namespace . DS . $tag . '.ctp';
+		$file = APP . (($plugin)? 'Plugin' . DS . $plugin . DS : DS) . 'View' . DS . 'Namespace' . DS . $namespace . DS . $tag . '.ctp';
 		if (!is_file($file)) {
 			return h($raw);
 		}
