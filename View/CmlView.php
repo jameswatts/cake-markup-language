@@ -396,14 +396,14 @@ class CmlView extends View {
  * @param string $plugin Name of the plugin.
  * @param string $namespace The parsed namespace.
  * @param string $tag The parsed tag name.
- * @param string $attributes The parsed attributes.
+ * @param string $attrs The parsed attributes.
  * @param string $state The tag state.
  * @param string $raw The raw string from the parser.
  * @return string
  * @throws CakeException if the template cannot be found or an error occurs.
  */
-	protected function _parseTag($plugin, $namespace, $tag, $attributes, $state, $raw) {
-		$file = APP . (($plugin)? 'Plugin' . DS . $plugin . DS : DS) . 'View' . DS . 'Namespace' . DS . $namespace . DS . $tag . '.ctp';
+	protected function _parseTag($plugin, $ns, $tag, $attrs, $state, $raw) {
+		$file = APP . (($plugin)? 'Plugin' . DS . $plugin . DS : DS) . 'View' . DS . 'Namespace' . DS . $ns . DS . $tag . '.ctp';
 		if (!is_file($file)) {
 			return h($raw);
 		}
@@ -426,28 +426,28 @@ class CmlView extends View {
  * @return array
  */
 	protected function _parseAttributes($tag = '') {
-		$attributes = array();
+		$attrs = array();
 		if (!preg_match('/^\s+$/', (string) $tag)) {
 			$tag = preg_replace('/[\s]{2,}/', ' ', (string) $tag);
 			preg_match_all('/\s+([\w\-]+)\=("[^"]{1,}")/i', $tag, $parts, PREG_OFFSET_CAPTURE);
 			if (count($parts) === 3) {
 				for ($i = 0; $i < count($parts[0]); $i++) {
-					$attributes[$parts[1][$i][0]] = substr($parts[2][$i][0], 1, strlen($parts[2][$i][0])-2);
+					$attrs[$parts[1][$i][0]] = substr($parts[2][$i][0], 1, strlen($parts[2][$i][0])-2);
 				}
 			}
 		}
-		return $attributes;
+		return $attrs;
 	}
 
 /**
- * Processes an attribute with a default value, and optionally formats as an attribute.
+ * Processes and resolves an attribute with default options.
  *
- * @param array $attributes The attributes to use.
+ * @param array $attrs The attributes to use.
  * @param string $name The attribute to process.
  * @param array $options The processing options.
  * @return string
  */
-	public function attribute(array $attributes, $name, array $options = null) {
+	public function resolve(array $attrs, $name, array $options = null) {
 		$options = array_merge(array(
 			'default' => null,
 			'format' => '"%s"',
@@ -455,8 +455,8 @@ class CmlView extends View {
 			'parse' => null,
 			'type' => self::TYPE_STRING
 		), (array) $options);
-		$attribute = (array_key_exists($name, $attributes))? $attributes[$name] : $options['default'];
-		if ($attribute === null) {
+		$attr = (array_key_exists($name, $attrs))? $attrs[$name] : $options['default'];
+		if ($attr === null) {
 			switch ($options['type']) {
 				case self::TYPE_NULL:
 					return 'null';
@@ -473,10 +473,10 @@ class CmlView extends View {
 					return (is_string($options['format']))? sprintf($options['format'], '') : '';
 			}
 		} else {
-			if (strstr($attribute, '&')) {
-				$attribute = html_entity_decode($attribute, ENT_QUOTES);
+			if (strstr($attr, '&')) {
+				$attr = html_entity_decode($attr, ENT_QUOTES);
 			}
-			$string = strtolower(trim($attribute));
+			$string = strtolower(trim($attr));
 			$gnirts = strrev($string);
 			if ($options['type'] === self::TYPE_NULL || $string === 'null') {
 				return ($string === 'null')? 'null' : $string;
@@ -484,7 +484,7 @@ class CmlView extends View {
 				if ($options['type'] === self::TYPE_BOOLEAN) {
 					return ($string === 'false' || $string === '0' || $string === '')? 'false' : 'true';
 				} else {
-					return (is_string($options['format']))? ((is_array($options['replace']))? sprintf($options['format'], str_replace($options['replace'][0], $options['replace'][1], (string) $attribute)) : sprintf($options['format'], (string) $attribute)) : (($string === 'null')? '' : ($string === 'true'));
+					return (is_string($options['format']))? ((is_array($options['replace']))? sprintf($options['format'], str_replace($options['replace'][0], $options['replace'][1], (string) $attr)) : sprintf($options['format'], (string) $attr)) : (($string === 'null')? '' : ($string === 'true'));
 				}
 			} else if ($options['type'] === self::TYPE_INTEGER) {
 				return (int) $string;
@@ -493,20 +493,20 @@ class CmlView extends View {
 			} else if ($options['type'] === self::TYPE_NUMERIC) {
 				return 0+$string;
 			} else if ($options['type'] === self::TYPE_ARRAY || $options['type'] === self::TYPE_OBJECT || (strlen($string) > 0 && $string{0} === '[' && $gnirts{0} === ']')) {
-				return str_replace(array('[', ']'), array('array(', ')'), preg_replace('/(<\?php echo )(\$this\->(translate|translateDomain|reference|variable|value)\(\'([^\)]+)\'\))(\; \?>)/', '$2', trim($attribute)));
+				return str_replace(array('[', ']'), array('array(', ')'), preg_replace('/(<\?php echo )(\$this\->(translate|translateDomain|reference|variable|value)\(\'([^\)]+)\'\))(\; \?>)/', '$2', trim($attr)));
 			} else {
 				if (substr($string, 0, 7) === '$this->') {
-					$value = $attribute;
+					$value = $attr;
 				} else {
 					if (is_string($options['format'])) {
 						if (is_array($options['replace'])) {
-							$replaced = str_replace($options['replace'][0], $options['replace'][1], (string) $attribute);
+							$replaced = str_replace($options['replace'][0], $options['replace'][1], (string) $attr);
 							$value = (substr($replaced, 0, 7) === '$this->')? $replaced : sprintf($options['format'], $replaced);
 						} else {
-							$value = sprintf($options['format'], $attribute);
+							$value = sprintf($options['format'], $attr);
 						}
 					} else {
-						$value = $attribute;
+						$value = $attr;
 					}
 				}
 				if ($options['parse'] === true) {

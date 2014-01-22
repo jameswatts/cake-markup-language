@@ -32,14 +32,14 @@ abstract class CmlNamespace extends Object {
  * 
  * @var Controller
  */
-	protected $_controller = null;
+	protected $_Controller = null;
 
 /**
  * Reference to the view object.
  * 
  * @var View
  */
-	protected $_view = null;
+	protected $_View = null;
 
 /**
  * Constructor
@@ -47,8 +47,8 @@ abstract class CmlNamespace extends Object {
  * @param Controller $controller A controller object to pull View::_passedVars from.
  */
 	public function __construct(Controller &$controller, View &$view) {
-		$this->_controller = $controller;
-		$this->_view = $view;
+		$this->_Controller = $controller;
+		$this->_View = $view;
 	}
 
 /**
