@@ -105,22 +105,6 @@ class CmlView extends View {
 	);
 
 /**
- * Contains the helpers used.
- * 
- * @var array
- */
-	protected $_helpers = array(
-		'Html' => null,
-		'Form' => null,
-		'Paginator' => null,
-		'Js' => null,
-		'Text' => null,
-		'Number' => null,
-		'Time' => null,
-		'Cache' => null
-	);
-
-/**
  * Enables debug mode.
  * 
  * @var boolean
@@ -184,20 +168,10 @@ class CmlView extends View {
 			if (!class_exists($class)) {
 				throw new CakeException(sprintf('Unknown namespace: %s', $class));
 			}
-			$namespace = new $class($controller, $this);
-			$namespace->load((isset($nsSettings[$ns]))? $nsSettings[$ns] : array());
+			$namespace = new $class($controller, $this, (isset($nsSettings[$ns]))? $nsSettings[$ns] : array());
+			$namespace->load();
 			$this->$ns = $namespace;
 		}
-		$this->_helpers = array(
-			'Html' => $controller->Parser->htmlHelper,
-			'Form' => $controller->Parser->formHelper,
-			'Paginator' => $controller->Parser->paginatorHelper,
-			'Js' => $controller->Parser->jsHelper,
-			'Text' => $controller->Parser->textHelper,
-			'Number' => $controller->Parser->numberHelper,
-			'Time' => $controller->Parser->timeHelper,
-			'Cache' => $controller->Parser->cacheHelper
-		);
 		$this->_debug = $controller->Parser->debug;
 		$this->_controller = $controller;
 		foreach ($this->viewVars as $key => $value) {

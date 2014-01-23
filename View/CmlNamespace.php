@@ -17,8 +17,10 @@
  * @license       MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
 
+App::uses('Set', 'Utility');
 App::uses('Controller', 'Controller');
 App::uses('View', 'View');
+App::uses('HelperCollection', 'View');
 
 /**
  * Base class for namespaces in the Cake Markup Language.
@@ -28,14 +30,28 @@ App::uses('View', 'View');
 abstract class CmlNamespace extends Object {
 
 /**
- * Reference to the controller object.
+ * Settings for this namespace.
+ *
+ * @var array
+ */
+	public $settings = array();
+
+/**
+ * Collection of helpers used by the namespace.
+ * 
+ * @var HelperCollection
+ */
+	public $Helpers = null;
+
+/**
+ * Reference to the Controller object.
  * 
  * @var Controller
  */
 	protected $_Controller = null;
 
 /**
- * Reference to the view object.
+ * Reference to the View object.
  * 
  * @var View
  */
@@ -44,19 +60,32 @@ abstract class CmlNamespace extends Object {
 /**
  * Constructor
  *
- * @param Controller $controller A controller object to pull View::_passedVars from.
+ * @param Controller $controller The Controller object.
+ * @param View $view The View object.
+ * @param array $settings Optional settings to configure the namespace.
  */
-	public function __construct(Controller &$controller, View &$view) {
+	public function __construct(Controller &$controller, View &$view, array $settings = null) {
 		$this->_Controller = $controller;
 		$this->_View = $view;
+		$this->Helpers = new HelperCollection($view);
+		if ($settings) {
+			$this->settings = Set::merge($this->settings, $settings);
+		}
+		if (isset($this->settings['helpers'])) {
+			$helpers = HelperCollection::normalizeObjectArray(Set::normalize((array)$this->settings['helpers']));
+			foreach ($helpers as $name => $properties) {
+				list($plugin, $class) = pluginSplit($properties['class']);
+				$this->$class = $this->Helpers->load($properties['class'], $properties['settings']);
+			}
+		}
 	}
 
 /**
  * Abstract method used to initialize the namespace, with optional settings.
  * 
- * @param array $settings Optional settings to configure the namespace.
+ * @return void
  */
-	abstract public function load(array $settings = null);
+	abstract public function load();
 
 }
 

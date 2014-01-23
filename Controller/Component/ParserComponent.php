@@ -88,62 +88,6 @@ class ParserComponent extends Component {
 	public $loadSession = false;
 
 /**
- * Determines the name of the Html helper in the View.
- *
- * @var string
- */
-	public $htmlHelper = 'Html';
-
-/**
- * Determines the name of the Form helper in the View.
- *
- * @var string
- */
-	public $formHelper = 'Form';
-
-/**
- * Determines the name of the Paginator helper in the View.
- *
- * @var string
- */
-	public $paginatorHelper = 'Paginator';
-
-/**
- * Determines the name of the Js helper in the View.
- *
- * @var string
- */
-	public $jsHelper = 'Js';
-
-/**
- * Determines the name of the Text helper in the View.
- *
- * @var string
- */
-	public $textHelper = 'Text';
-
-/**
- * Determines the name of the Number helper in the View.
- *
- * @var string
- */
-	public $numberHelper = 'Number';
-
-/**
- * Determines the name of the Time helper in the View.
- *
- * @var string
- */
-	public $timeHelper = 'Time';
-
-/**
- * Determines the name of the Cache helper in the View.
- *
- * @var string
- */
-	public $cacheHelper = 'Cache';
-
-/**
  * Determines if layouts are parsed as markup.
  *
  * @var boolean
@@ -196,7 +140,7 @@ class ParserComponent extends Component {
 				if (!is_array($controller->helpers)) {
 					$controller->helpers = $this->helpers;
 				} else {
-					array_merge($controller->helpers, $this->helpers);
+					$controller->helpers = array_merge($controller->helpers, $this->helpers);
 				}
 			}
 			if (is_string($this->layout)) {
@@ -206,7 +150,7 @@ class ParserComponent extends Component {
 				if (!is_array($controller->cacheAction)) {
 					$controller->cacheAction = $this->cacheAction;
 				} else {
-					array_merge($controller->cacheAction, $this->cacheAction);
+					$controller->cacheAction = array_merge($controller->cacheAction, $this->cacheAction);
 				}
 			}
 		}
