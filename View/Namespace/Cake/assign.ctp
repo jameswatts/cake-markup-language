@@ -2,6 +2,6 @@
 switch ($state) {
 	case self::TAG_OPEN:
 	case self::TAG_SELF:
-		echo $this->_compile('ob_start();') . $this->_processAttribute($attributes, 'value', array('format' => null)) . $this->_compile('$value = ob_get_clean(); $this->assign(%s, $value);', $this->_processAttribute($attributes, 'name'));
+		echo $this->compile('ob_start();') . $this->resolve($attrs, 'value', array('format' => null)) . $this->compile('$value = ob_get_clean(); $this->assign(%s, $value);', $this->resolve($attrs, 'name'));
 }
 

@@ -29,9 +29,9 @@ class PhpNamespace extends CmlNamespace {
 /**
  * Method used to initialize the namespace, with optional settings.
  * 
- * @param array $settings Optional settings to configure the namespace.
+ * @return void
  */
-	public function load(array $settings = null) {
+	public function load() {
 		$vars = array(
 			'server' => array(),
 			'session' => array(),
@@ -52,7 +52,7 @@ class PhpNamespace extends CmlNamespace {
 		foreach ($_COOKIE as $key => $value) {
 			$vars['cookie'][$key] = $value;
 		}
-		$this->_view->viewVars['Php'] = $vars;
+		$this->_View->viewVars['Php'] = $vars;
 	}
 
 }

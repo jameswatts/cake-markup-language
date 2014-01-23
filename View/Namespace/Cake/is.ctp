@@ -1,13 +1,13 @@
 <?php
 switch ($state) {
 	case self::TAG_OPEN:
-		echo $this->_compile('if ($this->request->is(%s)):', $this->_processAttribute($attributes, 'type'));
+		echo $this->compile('if ($this->request->is(%s)):', $this->resolve($attrs, 'type'));
 		break;
 	case self::TAG_SELF:
-		echo $this->_compile('if ($this->request->is(%s)) { echo %s; }', $this->_processAttribute($attributes, 'type'), $this->_processAttribute($attributes, 'value'));
+		echo $this->compile('if ($this->request->is(%s)) { echo %s; }', $this->resolve($attrs, 'type'), $this->resolve($attrs, 'value'));
 		break;
 	case self::TAG_CLOSE:
-		echo $this->_compile('endif;');
+		echo $this->compile('endif;');
 		break;
 }
 

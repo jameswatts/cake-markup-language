@@ -2,6 +2,6 @@
 switch ($state) {
 	case self::TAG_OPEN:
 	case self::TAG_SELF:
-		echo $this->_compile('$out = $this->%s->getCrumbList(%s, %s); $set = %s; if (!empty($set)) { $this->viewVars[$set] = $out; } else { echo $out; }', $this->_helpers['Html'], $this->_processAttribute($attributes, 'options', array('default' => 'array()', 'format' => null)), $this->_processAttribute($attributes, 'start'), $this->_processAttribute($attributes, 'set'));
+		echo $this->compile('$out = $this->%s->getCrumbList(%s, %s); $set = %s; if (!empty($set)) { $this->set($set, $out); } else { echo $out; }', $this->{$ns}->settings['classes']['Html'], $this->resolve($attrs, 'options', array('type' => self::TYPE_ARRAY)), $this->resolve($attrs, 'start'), $this->resolve($attrs, 'set'));
 }
 

@@ -2,6 +2,6 @@
 switch ($state) {
 	case self::TAG_OPEN:
 	case self::TAG_SELF:
-		echo $this->_compile('debug($this->_processValue(%s));', $this->_processAttribute($attributes, 'var'));
+		echo $this->compile('debug($this->value(%s));', $this->resolve($attrs, 'var'));
 }
 

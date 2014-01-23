@@ -27,37 +27,56 @@ App::uses('CmlNamespace', 'Cml.View');
 class CakeNamespace extends CmlNamespace {
 
 /**
- * Method used to initialize the namespace, with optional settings.
- * 
- * @param array $settings Optional settings to configure the namespace.
+ * Settings for this namespace.
+ *
+ * @var array
  */
-	public function load(array $settings = null) {
-		$this->_view->viewVars['Cake'] = array(
+	public $settings = array(
+		'classes' => array(
+			'Html' => 'Html',
+			'Form' => 'Form',
+			'Paginator' => 'Paginator',
+			'Js' => 'Js',
+			'Text' => 'Text',
+			'Number' => 'Number',
+			'Time' => 'Time',
+			'Cache' => 'Cache',
+			'Session' => 'Session'
+		)
+	);
+
+/**
+ * Method used to initialize the namespace, with optional settings.
+ *
+ * @return void
+ */
+	public function load() {
+		$this->_View->viewVars['Cake'] = array(
 			'version' => Configure::version(),
 			'debug' => Configure::read('debug'),
-			'plugin' => $this->_controller->plugin,
-			'controller' => $this->_controller->name,
-			'action' => $this->_controller->action,
-			'view' => $this->_controller->view,
-			'layout' => $this->_controller->layout,
-			'modelClass' => $this->_controller->modelClass,
-			'modelKey' => $this->_controller->modelKey,
-			'validationErrors' => $this->_controller->validationErrors,
-			'passedArgs' => $this->_controller->passedArgs,
+			'plugin' => $this->_Controller->plugin,
+			'controller' => $this->_Controller->name,
+			'action' => $this->_Controller->action,
+			'view' => $this->_Controller->view,
+			'layout' => $this->_Controller->layout,
+			'modelClass' => $this->_Controller->modelClass,
+			'modelKey' => $this->_Controller->modelKey,
+			'validationErrors' => $this->_Controller->validationErrors,
+			'passedArgs' => $this->_Controller->passedArgs,
 			'request' => array(
-				'params' => $this->_controller->request->params,
-				'data' => $this->_controller->request->data,
-				'query' => $this->_controller->request->query,
-				'url' => $this->_controller->request->url,
-				'base' => $this->_controller->request->base,
-				'webroot' => $this->_controller->request->webroot,
-				'here' => $this->_controller->request->here,
-				'domain' => $this->_controller->request->domain(),
-				'subdomains' => $this->_controller->request->subdomains(),
-				'host' => $this->_controller->request->host(),
-				'method' => $this->_controller->request->method(),
-				'referer' => $this->_controller->request->referer(),
-				'clientIp' => $this->_controller->request->clientIp()
+				'params' => $this->_Controller->request->params,
+				'data' => $this->_Controller->request->data,
+				'query' => $this->_Controller->request->query,
+				'url' => $this->_Controller->request->url,
+				'base' => $this->_Controller->request->base,
+				'webroot' => $this->_Controller->request->webroot,
+				'here' => $this->_Controller->request->here,
+				'domain' => $this->_Controller->request->domain(),
+				'subdomains' => $this->_Controller->request->subdomains(),
+				'host' => $this->_Controller->request->host(),
+				'method' => $this->_Controller->request->method(),
+				'referer' => $this->_Controller->request->referer(),
+				'clientIp' => $this->_Controller->request->clientIp()
 			)
 		);
 	}

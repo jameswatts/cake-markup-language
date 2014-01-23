@@ -1,7 +1,12 @@
 <?php
 switch ($state) {
 	case self::TAG_OPEN:
+		echo $this->compile('$this->append(%s);', $this->resolve($attrs, 'name'));
+		break;
 	case self::TAG_SELF:
-		echo $this->_compile('ob_start();') . $this->_processAttribute($attributes, 'value', array('format' => null)) . $this->_compile('$value = ob_get_clean(); $this->append(%s, $value);', $this->_processAttribute($attributes, 'name'));
+		echo $this->compile('ob_start();') . $this->resolve($attrs, 'value', array('format' => null)) . $this->compile('$value = ob_get_clean(); $this->append(%s, $value);', $this->resolve($attrs, 'name'));
+		break;
+	case self::TAG_CLOSE:
+		echo $this->compile('$this->end();');
 }
 

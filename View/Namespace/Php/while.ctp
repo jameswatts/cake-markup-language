@@ -1,9 +1,9 @@
 <?php
 switch ($state) {
 	case self::TAG_OPEN:
-		echo $this->_compile('$this->viewVars[\'COUNT\'] = 0; while (%s): $this->viewVars[\'COUNT\']++;', str_replace(array('isset(', 'empty('), array('$this->_processIsset(', '$this->_processEmpty('), $this->_processAttribute($attributes, 'expr', array('default' => 'true', 'format' => '%s', 'parse' => true))));
+		echo $this->compile('$this->set(\'COUNT\', 0); while (%s): $this->viewVars[\'COUNT\']++;', str_replace(array('isset(', 'empty('), array('$this->_isset(', '$this->_empty('), $this->resolve($attrs, 'expr', array('default' => 'true', 'format' => '%s', 'parse' => true))));
 		break;
 	case self::TAG_CLOSE:
-		echo $this->_compile('endwhile;');
+		echo $this->compile('endwhile;');
 }
 

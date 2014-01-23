@@ -1,10 +1,20 @@
 <?php
 switch ($state) {
 	case self::TAG_OPEN:
-		echo $this->_compile('$out = $this->%s->link(%s, %s, %s, %s); echo substr($out, 0, -4);', $this->_helpers['Html'], $this->_processAttribute($attributes, 'value'), $this->_processAttribute($attributes, 'url'), $this->_processAttribute($attributes, 'options', array('default' => 'array()', 'format' => null)), $this->_processAttribute($attributes, 'confirm'));
+		$value = $this->resolve($attrs, 'value');
+		$url = $this->resolve($attrs, 'url');
+		if ($value === '""') {
+			$value = $url;
+		}
+		echo $this->compile('$out = $this->%s->link(%s, %s, %s, %s); echo substr($out, 0, -4);', $this->{$ns}->settings['classes']['Html'], $value, $url, $this->resolve($attrs, 'options', array('type' => self::TYPE_ARRAY)), $this->resolve($attrs, 'confirm'));
 		break;
 	case self::TAG_SELF:
-		echo $this->_compile('$out = $this->%s->link(%s, %s, %s, %s); $set = %s; if (!empty($set)) { $this->viewVars[$set] = $out; } else { echo $out; }', $this->_helpers['Html'], $this->_processAttribute($attributes, 'value'), $this->_processAttribute($attributes, 'url'), $this->_processAttribute($attributes, 'options', array('default' => 'array()', 'format' => null)), $this->_processAttribute($attributes, 'confirm'), $this->_processAttribute($attributes, 'set'));
+		$value = $this->resolve($attrs, 'value');
+		$url = $this->resolve($attrs, 'url');
+		if ($value === '""') {
+			$value = $url;
+		}
+		echo $this->compile('$out = $this->%s->link(%s, %s, %s, %s); $set = %s; if (!empty($set)) { $this->set($set, $out); } else { echo $out; }', $this->{$ns}->settings['classes']['Html'], $value, $url, $this->resolve($attrs, 'options', array('type' => self::TYPE_ARRAY)), $this->resolve($attrs, 'confirm'), $this->resolve($attrs, 'set'));
 		break;
 	case self::TAG_CLOSE:
 		echo '</a>';
