@@ -594,7 +594,7 @@ class CmlView extends View {
 			foreach ($parts as $part) {
 				$isArray = is_array($array);
 				$isObject = is_object($array);
-				if (($isObject && (property_exists($array, $part) || method_exists($array, $part))) || ($isArray && array_key_exists($part, $array))) {
+				if (($isObject && (property_exists($array, $part) || isset($array->$part) || method_exists($array, $part))) || ($isArray && array_key_exists($part, $array))) {
 					$array = ($isObject)? ((method_exists($array, $part))? $array->$part() : $array->$part) : $array[$part];
 				} else {
 					if (ParserComponent::$loadSettings['configure'] || ParserComponent::$loadSettings['session']) {

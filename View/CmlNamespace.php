@@ -81,7 +81,7 @@ abstract class CmlNamespace extends Object {
 	}
 
 /**
- * Abstract method used to initialize the namespace, with optional settings.
+ * Abstract method used to initialize the namespace.
  * 
  * @return void
  */
