@@ -102,6 +102,13 @@ class ParserComponent extends Component {
 	public $renderElement = false;
 
 /**
+ * Fallback to ".ctp" if a ".cml" file is not found.
+ *
+ * @var boolean
+ */
+	public $fallback = false;
+
+/**
  * Determines if debug mode is enabled.
  *
  * @var boolean
@@ -135,6 +142,7 @@ class ParserComponent extends Component {
 			self::$loadSettings['session'] = $this->loadSession;
 			self::$renderSettings['layout'] = $this->renderLayout;
 			self::$renderSettings['element'] = $this->renderElement;
+			self::$renderSettings['fallback'] = $this->fallback;
 			$controller->viewClass = 'Cml.Cml';
 			if (is_array($this->helpers)) {
 				if (!is_array($controller->helpers)) {

@@ -128,6 +128,13 @@ class CmlView extends View {
 	protected $_overrideElement = false;
 
 /**
+ * Determines if the parser should be bypassed.
+ *
+ * @var boolean
+ */
+        protected $_bypassParser = false;
+
+/**
  * The currently parsed view file.
  *
  * @var string
@@ -695,7 +702,34 @@ class CmlView extends View {
 	protected function _getViewFileName($name = null) {
 		$this->ext = '.cml';
 		$this->_overrideExtType = true;
-		return parent::_getViewFileName($name);
+		try {
+			return parent::_getViewFileName($name);
+		} catch (MissingViewException $e) {
+			if (ParserComponent::$renderSettings['fallback']) {
+				$this->ext = '.ctp';
+				$this->_overrideExtType = false;
+				$this->_bypassParser = true;
+				return parent::_getViewFileName($name);
+			}
+			throw $e;
+		}
+	}
+
+/**
+ * Finds an element filename, returns false on failure.
+ *
+ * @param string $name The name of the element to find.
+ * @return mixed Either a string to the element filename or false when one can't be found.
+ */
+	protected function _getElementFileName($name) {
+		$path = parent::_getElementFileName($name);
+		if (!$path && $this->ext === '.cml') {
+			$this->ext = '.ctp';
+			$this->_overrideExtType = false;
+			$this->_bypassParser = true;
+			return parent::_getElementFileName($name);
+		}
+		return $path;
 	}
 
 /**
@@ -710,7 +744,17 @@ class CmlView extends View {
 			$this->ext = '.cml';
 			$this->_overrideExtType = true;
 		}
-		return parent::_getLayoutFileName($name);
+		try {
+			return parent::_getLayoutFileName($name);
+		} catch (MissingLayoutException $e) {
+			if (ParserComponent::$renderSettings['fallback']) {
+				$this->ext = '.ctp';
+				$this->_overrideExtType = false;
+				$this->_bypassParser = true;
+				return parent::_getLayoutFileName($name);
+			}
+			throw $e;
+		}
 	}
 
 /**
@@ -780,13 +824,14 @@ class CmlView extends View {
 	protected function _evaluate($viewFile, $dataForView) {
 		$this->ext = '.ctp';
 		$this->_overrideExtType = false;
-		if ($this->_currentType === self::TYPE_VIEW
+		if (!$this->_bypassParser && ($this->_currentType === self::TYPE_VIEW
 			|| ($this->_currentType === self::TYPE_LAYOUT && ParserComponent::$renderSettings['layout'] && substr($viewFile, -27) !== '/Cml/View/Layouts/debug.ctp')
-			|| ($this->_currentType === self::TYPE_ELEMENT && $this->_overrideElement)) {
+			|| ($this->_currentType === self::TYPE_ELEMENT && $this->_overrideElement))) {
 			$this->_parsed = $viewFile;
 			$this->_overrideElement = false;
 			return $this->_parse($viewFile);
 		} else {
+			$this->_bypassParser = false;
 			return parent::_evaluate($viewFile, $dataForView);
 		}
 	}
