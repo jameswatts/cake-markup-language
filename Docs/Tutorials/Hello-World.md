@@ -22,16 +22,9 @@ The **Cml.Parser** component also accepts a settings array, which allows you to 
 * **loadConfigure**: If *true*, additionally looks in Configure for View variables
 * **loadSession**: If *true*, additionally looks in the session for View variables
 * **debug**: If *true*, the internal [debug](../Documentation/Debugging.md) mode will be enabled
+* **fallback**: If *true*, a ".ctp" will be searched for if a ".cml" is not found
 * **renderLayout**: If *true*, specifies that all layouts will be ".cml" files
 * **renderElement**: If *true*, specifies that all elements will be ".cml" files
-* **htmlHelper**: Defines the HTML helper to use, defaults to the core helper
-* **formHelper**: Defines the form helper to use, defaults to the core helper
-* **paginatorHelper**: Defines the paginator helper to use, defaults to the core helper
-* **jsHelper**: Defines the JavaScript helper to use, defaults to the core helper
-* **textHelper**: Defines the text helper to use, defaults to the core helper
-* **numberHelper**: Defines the number helper to use, defaults to the core helper
-* **timeHelper**: Defines the time helper to use, defaults to the core helper
-* **cacheHelper**: Defines the cache helper to use, defaults to the core helper
 
 Creating Views
 --------------
