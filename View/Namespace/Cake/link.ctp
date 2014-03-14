@@ -1,12 +1,7 @@
 <?php
 switch ($state) {
 	case self::TAG_OPEN:
-		$value = $this->resolve($attrs, 'value');
-		$url = $this->resolve($attrs, 'url');
-		if ($value === '""') {
-			$value = $url;
-		}
-		echo $this->compile('$out = $this->%s->link(%s, %s, %s, %s); echo substr($out, 0, -4);', $this->{$ns}->settings['classes']['Html'], $value, $url, $this->resolve($attrs, 'options', array('type' => self::TYPE_ARRAY)), $this->resolve($attrs, 'confirm'));
+		echo $this->compile('$out = $this->%s->link("", %s, %s, %s); echo substr($out, 0, -4);', $this->{$ns}->settings['classes']['Html'], $this->resolve($attrs, 'url'), $this->resolve($attrs, 'options', array('type' => self::TYPE_ARRAY)), $this->resolve($attrs, 'confirm'));
 		break;
 	case self::TAG_SELF:
 		$value = $this->resolve($attrs, 'value');
