@@ -543,7 +543,8 @@ class CmlView extends View {
 				$part = str_replace(array('<?php ', 'echo ', '; ?>'), '', $part);
 				$values[] = (substr($part, 0, 7) === '$this->')? $part : "'" . str_replace("'", "\'", $part) . "'";
 			}
-		}	
+		}
+		$literal = str_replace("'", "\'", $literal);
 		$literal = str_replace(array('<?php ', 'echo ', '; ?>'), '', $literal);
 		$literal = (substr($literal, 0, 7) === '$this->')? $literal : "'" . $literal . "'";
 		return (($raw)? '' : '<?php echo ') . '$this->translate' . ((isset($domain))? "Domain({$domain}, {$literal}" : "({$literal}") . ((isset($values))? ', ' . implode(', ', $values) : '') . ')' . (($raw)? '' : '; ?>');
